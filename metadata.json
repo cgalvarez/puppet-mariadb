@@ -1,0 +1,26 @@
+{
+  "name": "cgalvarez-mariadb",
+  "version": "1.0.0",
+  "author": "Carlos García Álvarez",
+  "summary": "Puppet MariaDB module",
+  "license": "Apache-2.0",
+  "source": "https://github.com/cgalvarez/puppet-mariadb",
+  "project_page": "https://github.com/cgalvarez/puppet-mariadb",
+  "issues_url": "https://github.com/cgalvarez/puppet-mariadb/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">=3.2.0 <5.0.0"
+    },
+    {
+      "name": "puppetlabs/apt",
+      "version_requirement": ">=2.0.0"
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": "3.x"
+    }
+  ]
+}

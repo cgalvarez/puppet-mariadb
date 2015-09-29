@@ -43,25 +43,31 @@
 # Sample Usage:
 #
 class mariadb::server (
+  $package_version         = $mariadb::params::server_package_version,
   $package_ensure          = $mariadb::params::server_package_ensure,
   $package_names           = $mariadb::params::server_package_names,
   $service_name            = $mariadb::params::service_name,
   $service_provider        = $mariadb::params::service_provider,
   $client_package_names    = $mariadb::params::client_package_names,
   $client_package_ensure   = $mariadb::params::client_package_ensure,
+  $client_package_version  = $mariadb::params::client_package_version,
   $debiansysmaint_password = undef,
   $config_hash             = {},
   $enabled                 = true,
   $repo_version            = '5.5',
   $manage_service          = true,
   $manage_repo             = true,
+  $pin_pkg                 = 'mariadb-server',
 ) inherits mariadb::params {
 
   class { 'mariadb':
-    package_names  => $client_package_names,
-    package_ensure => $client_package_ensure,
-    repo_version   => $repo_version,
-    manage_repo    => $manage_repo,
+    package_names   => $client_package_names,
+    package_ensure  => $client_package_ensure,
+    package_version => $client_package_version,
+    repo_version    => $repo_version,
+    manage_repo     => $manage_repo,
+    pin_pkg         => $pin_pkg,
+    before          => Class['mariadb::config'],
   }
 
   Class['mariadb::server'] -> Class['mariadb::config']
@@ -72,11 +78,12 @@ class mariadb::server (
 
   package { $package_names:
     ensure  => $package_ensure,
-    require => Package[$client_package_names] 
+    require => Package[$client_package_names],
+    #require => [Class['mariadb'], Package[$client_package_names]],
   }
 
   file { '/var/log/mysql/error.log':
-    owner => mysql,
+    owner   => 'mysql',
     require => Package[$package_names],
   }
 
@@ -100,6 +107,7 @@ class mariadb::server (
       owner     => 'mysql',
       group     => 'mysql',
       mode      => '0755',
+      require   => Package[$package_names],
     }
 
     -> service { 'mariadb':

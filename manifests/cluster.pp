@@ -71,8 +71,13 @@ class mariadb::cluster (
   $wsrep_slave_threads     = $mariadb::params::slave_threads,
   $package_names           = $mariadb::params::cluster_package_names,
   $package_ensure          = $mariadb::params::cluster_package_ensure,
+  $package_version         = $mariadb::params::cluster_package_version,
+  $client_package_names    = $mariadb::params::cluster_package_names,
+  $client_package_ensure   = $mariadb::params::cluster_package_ensure,
+  $client_package_version  = $mariadb::params::cluster_package_version,
   $galera_name             = $mariadb::params::galera_package_name,
   $galera_ensure           = $mariadb::params::cluster_package_ensure,
+  $galera_version          = $mariadb::params::cluster_package_version,
   $debiansysmaint_password = undef,
   $status_password         = undef,
   $repo_version            = '5.5',
@@ -90,11 +95,16 @@ class mariadb::cluster (
   class { 'mariadb::server':
     package_names           => $package_names,
     package_ensure          => $package_ensure,
+    package_version         => $package_version,
+    client_package_names    => $client_package_names,
+    client_package_ensure   => $client_package_ensure,
+    client_package_version  => $client_package_version,
     debiansysmaint_password => $debiansysmaint_password,
     repo_version            => $repo_version,
     manage_repo             => $manage_repo,
     config_hash             => $config_hash,
     enabled                 => $enabled,
+    pin_pkg                 => 'mariadb-galera-server',
   }
 
   class { 'mariadb::cluster::auth':

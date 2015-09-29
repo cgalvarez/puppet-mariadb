@@ -12,12 +12,18 @@
 #
 class mariadb::params {
 
-  $bind_address        = '127.0.0.1'
-  $port                = 3306
-  $etc_root_password   = false
-  $ssl                 = false
-  $restart             = true
-  $slave_threads       = $::processorcount * 2
+  $bind_address            = '127.0.0.1'
+  $port                    = 3306
+  $etc_root_password       = false
+  $ssl                     = false
+  $restart                 = true
+  $slave_threads           = $::processorcount * 2
+  $client_package_ensure   = 'present'
+  $client_package_version  = undef
+  $server_package_ensure   = 'present'
+  $server_package_version  = undef
+  $cluster_package_ensure  = 'present'
+  $cluster_package_version = undef
 
   case $::osfamily {
     'RedHat': {
@@ -25,10 +31,8 @@ class mariadb::params {
       $datadir                = '/var/lib/mysql'
       $service_name           = 'mysql'
       $client_package_names   = ['MariaDB-client']
-      $client_package_ensure  = 'installed'
       $server_package_names   = ['MariaDB-server']
       $cluster_package_names  = ['MariaDB-Galera-server']
-      $cluster_package_ensure = 'installed'
       $galera_package_name    = 'galera'
       $socket                 = '/var/lib/mysql/mysql.sock'
       $pidfile                = '/var/run/mysqld/mysqld.pid'
@@ -46,6 +50,7 @@ class mariadb::params {
       $ssl_key                = "${config_dir}/server-key.pem"
       $repo_class             = 'mariadb::repo::redhat'
       $wsrep_provider         = '/usr/lib64/galera/libgalera_smm.so'
+      $mirror                 = undef     # Irrelevant for RedHat family
     }
 
     'Debian': {
@@ -53,10 +58,8 @@ class mariadb::params {
       $datadir                = '/var/lib/mysql'
       $service_name           = 'mysql'
       $client_package_names   = ['libmysqlclient18', 'mysql-common', 'mariadb-client']
-      $client_package_ensure  = 'installed'
       $server_package_names   = ['mariadb-server']
       $cluster_package_names  = ['mariadb-galera-server']
-      $cluster_package_ensure = 'installed'
       $galera_package_name    = 'galera'
       $socket                 = '/var/run/mysqld/mysqld.sock'
       $pidfile                = '/var/run/mysqld/mysqld.pid'
@@ -73,6 +76,7 @@ class mariadb::params {
       $ssl_key                = "${config_dir}//server-key.pem"
       $repo_class             = 'mariadb::repo::debian'
       $wsrep_provider         = '/usr/lib/galera/libgalera_smm.so'
+      $mirror                 = 'http://ftp.osuosl.org/pub/mariadb'
     }
 
     default: {

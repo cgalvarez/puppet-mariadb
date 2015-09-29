@@ -55,7 +55,7 @@ class mariadb::config(
   $restart           = $mariadb::params::restart,
   $purge_conf_dir    = false
 ) inherits mariadb::params {
-
+  
   File {
     owner  => 'root',
     group  => $root_group,

@@ -1,4 +1,4 @@
-## ?? - Next release
+## 2015-09-30 - Release 1.0.0
 
 - Allow holding a specific version/branch of MariaDB (both, RedHat and Debian families).
    - New parameters `mariadb::server::pin_pkg` and `mariadb::server::pin_pkg` added in case of any installation issue.

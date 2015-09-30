@@ -24,6 +24,7 @@ class mariadb::params {
   $server_package_version  = undef
   $cluster_package_ensure  = 'present'
   $cluster_package_version = undef
+  $repo_branch             = '10.0'
 
   case $::osfamily {
     'RedHat': {

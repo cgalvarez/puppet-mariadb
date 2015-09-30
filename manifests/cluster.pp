@@ -80,12 +80,12 @@ class mariadb::cluster (
   $galera_version          = $mariadb::params::cluster_package_version,
   $debiansysmaint_password = undef,
   $status_password         = undef,
-  $repo_version            = '5.5',
   $config_hash             = {},
   $enabled                 = true,
   $single_cluster_peer     = true,
   $manage_status           = true,
   $manage_repo             = true,
+  $pin_pkg                 = $mariadb::params::cluster_package_names,
 ) inherits mariadb::params {
 
   package { $galera_name:
@@ -100,11 +100,10 @@ class mariadb::cluster (
     client_package_ensure   => $client_package_ensure,
     client_package_version  => $client_package_version,
     debiansysmaint_password => $debiansysmaint_password,
-    repo_version            => $repo_version,
     manage_repo             => $manage_repo,
     config_hash             => $config_hash,
     enabled                 => $enabled,
-    pin_pkg                 => 'mariadb-galera-server',
+    pin_pkg                 => $pin_pkg,
   }
 
   class { 'mariadb::cluster::auth':
@@ -124,10 +123,9 @@ class mariadb::cluster (
   }
 
   # Find the next server in the list as a peer to sync with
-  if $single_cluster_peer == true {
-    $cluster_peer = inline_template("<% (0..cluster_servers.length).each do |i|; if cluster_servers[i] == ipaddress_${cluster_iface}; if (i+1) == cluster_servers.length %><%= cluster_servers[0] %><% else %><%= cluster_servers[i+1] %><% end; end; end %>")
-  } else {
-    $cluster_peer = join($cluster_servers,',')
+  $cluster_peer = $single_cluster_peer ? {
+    true    => inline_template("<% (0..cluster_servers.length).each do |i|; if cluster_servers[i] == ipaddress_${cluster_iface}; if (i+1) == cluster_servers.length %><%= cluster_servers[0] %><% else %><%= cluster_servers[i+1] %><% end; end; end %>"),
+    default => join($cluster_servers,','),
   }
 
   $wsrep_sst_auth = "${wsrep_sst_user}:${wsrep_sst_password}"

@@ -18,11 +18,11 @@
 # Sample Usage:
 #
 class mariadb::repo (
-  $branch  = '10.0',
+  $branch  = $mariadb::params::repo_branch,
   $version = undef,
   $hold    = false,
   $pin_pkg = undef,
-) {
+) inherits mariadb::params {
 
   # Validate input parameters
   validate_numeric($branch)

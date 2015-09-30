@@ -54,17 +54,15 @@ class mariadb::server (
   $debiansysmaint_password = undef,
   $config_hash             = {},
   $enabled                 = true,
-  $repo_version            = '5.5',
   $manage_service          = true,
   $manage_repo             = true,
-  $pin_pkg                 = 'mariadb-server',
+  $pin_pkg                 = $mariadb::params::server_package_names,
 ) inherits mariadb::params {
 
   class { 'mariadb':
     package_names   => $client_package_names,
     package_ensure  => $client_package_ensure,
     package_version => $client_package_version,
-    repo_version    => $repo_version,
     manage_repo     => $manage_repo,
     pin_pkg         => $pin_pkg,
     before          => Class['mariadb::config'],
@@ -76,15 +74,25 @@ class mariadb::server (
 
   create_resources( 'class', $config_class )
 
-  package { $package_names:
-    ensure  => $package_ensure,
-    require => Package[$client_package_names],
-    #require => [Class['mariadb'], Package[$client_package_names]],
+  $repo_branch = validate_and_extract('repo_branch', $package_version, $mariadb::params::repo_branch)
+  $real_package_names = $::osfamily ? {
+    #'Debian' => regsubst($package_names, '^.*$', "\\0-${repo_branch}", ''),
+    'Debian' => suffix($package_names, "-${repo_branch}"),
+    'RedHat' => $package_names,
+    default  => undef,
+  }
+
+  package { $real_package_names:
+    require   => Package[$client_package_names],
+    ensure    => (is_string($package_version) and $package_version =~ /^\d+\.\d+\.\d+/) ? {
+      true    => regsubst($package_version, '^(\d+\.\d+\.\d+).*$', '\1*'),
+      default => $package_ensure,
+    },
   }
 
   file { '/var/log/mysql/error.log':
     owner   => 'mysql',
-    require => Package[$package_names],
+    require => Package[$real_package_names],
   }
 
   #if $debiansysmaint_password != undef {
@@ -93,10 +101,9 @@ class mariadb::server (
   #  }
   #}
 
-  if $enabled {
-    $service_ensure = 'running'
-  } else {
-    $service_ensure = 'stopped'
+  $service_ensure = $enabled ? {
+    true    => 'running',
+    default => 'stopped',
   }
 
   if $manage_service {
@@ -107,14 +114,14 @@ class mariadb::server (
       owner     => 'mysql',
       group     => 'mysql',
       mode      => '0755',
-      require   => Package[$package_names],
+      require   => Package[$real_package_names],
     }
 
     -> service { 'mariadb':
       ensure   => $service_ensure,
       name     => $service_name,
       enable   => $enabled,
-      require  => Package[$package_names],
+      require  => Package[$real_package_names],
       provider => $service_provider,
     }
   }

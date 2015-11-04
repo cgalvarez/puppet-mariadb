@@ -20,7 +20,7 @@ module Puppet::Parser::Functions
     param[args[0]] = args[2] if !args[2].nil?
 
     # Extract branch from package version (first param) when provided
-    if !args[1].nil?
+    if !args[1].nil? and !args[1].empty?
       if args[1] =~ /(\d+\.[xX]|\d+\.\d+\.[xX])/
         param['branch']  = args[1].gsub(/\.[xX]/, '') if args[0] != 'version'
       elsif args[1] =~ /^\d+\.\d+\.\d+/

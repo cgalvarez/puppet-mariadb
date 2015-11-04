@@ -83,10 +83,13 @@ class mariadb::server (
   }
 
   package { $real_package_names:
-    require   => Package[$client_package_names],
-    ensure    => (is_string($package_version) and $package_version =~ /^\d+\.\d+\.\d+/) ? {
-      true    => regsubst($package_version, '^(\d+\.\d+\.\d+).*$', '\1*'),
-      default => $package_ensure,
+    require     => Package[$client_package_names],
+    ensure      => $package_version ? {
+      undef     => $package_ensure,
+      default   => ($package_version =~ /^\d+\.\d+\.\d+/) ? {
+        true    => regsubst($package_version, '^(\d+\.\d+\.\d+).*$', '\1*'),
+        default => $package_ensure,
+      },
     },
   }
 

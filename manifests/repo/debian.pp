@@ -74,7 +74,6 @@ define mariadb::repo::debian (
       $require = Class['mariadb::package']
     }
 
-    notice("command: /bin/rm -f ${_path}/${_priority}${_base_name}${_ext} ${_path}/${_base_name}${_ext}")
     exec { "pin_mariadb_${escaped_branch}_postremoval":
       command => "/bin/rm -f ${_path}/${_priority}${_base_name}${_ext} ${_path}/${_base_name}${_ext}",
       user    => 'root',

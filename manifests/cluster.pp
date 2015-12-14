@@ -68,16 +68,16 @@ class mariadb::cluster (
   $wsrep_cluster_name      = 'my_wsrep_cluster',
   $status_user             = 'clusterstatus',
   $wsrep_sst_method        = 'mysqldump',
-  $wsrep_slave_threads     = $mariadb::params::slave_threads,
-  $package_names           = $mariadb::params::cluster_package_names,
-  $package_ensure          = $mariadb::params::cluster_package_ensure,
-  $package_version         = $mariadb::params::cluster_package_version,
-  $client_package_names    = $mariadb::params::cluster_package_names,
-  $client_package_ensure   = $mariadb::params::cluster_package_ensure,
-  $client_package_version  = $mariadb::params::cluster_package_version,
-  $galera_name             = $mariadb::params::galera_package_name,
-  $galera_ensure           = $mariadb::params::cluster_package_ensure,
-  $galera_version          = $mariadb::params::cluster_package_version,
+  $wsrep_slave_threads     = $::mariadb::params::slave_threads,
+  $package_names           = $::mariadb::params::cluster_package_names,
+  $package_ensure          = $::mariadb::params::cluster_package_ensure,
+  $package_version         = $::mariadb::params::cluster_package_version,
+  $client_package_names    = $::mariadb::params::cluster_package_names,
+  $client_package_ensure   = $::mariadb::params::cluster_package_ensure,
+  $client_package_version  = $::mariadb::params::cluster_package_version,
+  $galera_name             = $::mariadb::params::galera_package_name,
+  $galera_ensure           = $::mariadb::params::cluster_package_ensure,
+  $galera_version          = $::mariadb::params::cluster_package_version,
   $debiansysmaint_password = undef,
   $status_password         = undef,
   $config_hash             = {},
@@ -85,8 +85,9 @@ class mariadb::cluster (
   $single_cluster_peer     = true,
   $manage_status           = true,
   $manage_repo             = true,
-  $pin_pkg                 = $mariadb::params::cluster_package_names,
-) inherits mariadb::params {
+  $repo_version            = $::mariadb::params::repo_branch,
+  $pin_pkg                 = $::mariadb::params::cluster_package_names,
+) inherits ::mariadb::params {
 
   package { $galera_name:
     ensure => $galera_ensure,
@@ -101,6 +102,7 @@ class mariadb::cluster (
     client_package_version  => $client_package_version,
     debiansysmaint_password => $debiansysmaint_password,
     manage_repo             => $manage_repo,
+    repo_version            => $repo_version,
     config_hash             => $config_hash,
     enabled                 => $enabled,
     pin_pkg                 => $pin_pkg,
@@ -130,7 +132,7 @@ class mariadb::cluster (
 
   $wsrep_sst_auth = "${wsrep_sst_user}:${wsrep_sst_password}"
 
-  file { "${mariadb::params::config_dir}/galera_replication.cnf":
+  file { "${::mariadb::params::config_dir}/galera_replication.cnf":
     content => template('mariadb/galera_replication.cnf.erb'),
     require => Class['mariadb::server'],
   }

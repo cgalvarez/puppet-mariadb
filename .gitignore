@@ -6,5 +6,6 @@ spec/fixtures/
 .bundle/
 coverage/
 log/
+.project
 .*.swp
 *~

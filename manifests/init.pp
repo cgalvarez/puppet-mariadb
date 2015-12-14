@@ -27,20 +27,24 @@
 class mariadb (
   $package_ensure  = 'present',
   $package_version = undef,
-  $package_names   = $mariadb::params::client_package_names,
+  $package_names   = $::mariadb::params::client_package_names,
   $manage_repo     = true,
+  $repo_version    = $::mariadb::params::repo_branch,
   $pin_pkg         = undef,
-  $mirror          = $mariadb::params::mirror,
-) inherits mariadb::params {
+  $mirror          = $::mariadb::params::mirror,
+) inherits ::mariadb::params {
 
   $version     = validate_and_extract('version', $package_version)
-  $repo_branch = validate_and_extract('repo_branch', $package_version, $mariadb::params::repo_branch)
+  $repo_branch = validate_and_extract('repo_branch', $package_version, $repo_version)
+  if $repo_branch != undef and $repo_version != undef and $repo_branch != $repo_version {
+    fail("Provided version ${package_version} does not belong to the provided branch ${repo_version}")
+  }
 
   if $manage_repo == true {
     # Set up repositories
     class { 'mariadb::repo':
       branch    => $repo_branch ? {
-        undef   => $mariadb::params::repo_branch,
+        undef   => $repo_version,
         default => $repo_branch,
       },
       version   => $version,

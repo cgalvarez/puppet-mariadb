@@ -43,27 +43,34 @@
 # Sample Usage:
 #
 class mariadb::server (
-  $package_version         = $mariadb::params::server_package_version,
-  $package_ensure          = $mariadb::params::server_package_ensure,
-  $package_names           = $mariadb::params::server_package_names,
-  $service_name            = $mariadb::params::service_name,
-  $service_provider        = $mariadb::params::service_provider,
-  $client_package_names    = $mariadb::params::client_package_names,
-  $client_package_ensure   = $mariadb::params::client_package_ensure,
-  $client_package_version  = $mariadb::params::client_package_version,
+  $package_version         = $::mariadb::params::server_package_version,
+  $package_ensure          = $::mariadb::params::server_package_ensure,
+  $package_names           = $::mariadb::params::server_package_names,
+  $service_name            = $::mariadb::params::service_name,
+  $service_provider        = $::mariadb::params::service_provider,
+  $client_package_names    = $::mariadb::params::client_package_names,
+  $client_package_ensure   = $::mariadb::params::client_package_ensure,
+  $client_package_version  = $::mariadb::params::client_package_version,
   $debiansysmaint_password = undef,
   $config_hash             = {},
   $enabled                 = true,
   $manage_service          = true,
   $manage_repo             = true,
-  $pin_pkg                 = $mariadb::params::server_package_names,
-) inherits mariadb::params {
+  $repo_version            = $::mariadb::params::repo_branch,
+  $pin_pkg                 = $::mariadb::params::server_package_names,
+) inherits ::mariadb::params {
 
+  $repo_branch = validate_and_extract('repo_branch', $package_version, $repo_version)
+  if $repo_branch != undef and $repo_version != undef and $repo_branch != $repo_version {
+    fail("Provided version ${package_version} does not belong to the provided branch ${repo_version}")
+  }
+  
   class { 'mariadb':
     package_names   => $client_package_names,
     package_ensure  => $client_package_ensure,
     package_version => $client_package_version,
     manage_repo     => $manage_repo,
+    repo_version    => $repo_branch,
     pin_pkg         => $pin_pkg,
     before          => Class['mariadb::config'],
   }
@@ -74,7 +81,6 @@ class mariadb::server (
 
   create_resources( 'class', $config_class )
 
-  $repo_branch = validate_and_extract('repo_branch', $package_version, $mariadb::params::repo_branch)
   $real_package_names = $::osfamily ? {
     #'Debian' => regsubst($package_names, '^.*$', "\\0-${repo_branch}", ''),
     'Debian' => suffix($package_names, "-${repo_branch}"),
@@ -98,19 +104,13 @@ class mariadb::server (
     require => Package[$real_package_names],
   }
 
-  #if $debiansysmaint_password != undef {
-  #  file { '/etc/mysql/debian.cnf':
-  #    content => template('mariadb/debian.cnf.erb'),
-  #  }
-  #}
-
   $service_ensure = $enabled ? {
     true    => 'running',
     default => 'stopped',
   }
 
   if $manage_service {
-    $piddir = dirname($mariadb::params::pidfile)
+    $piddir = dirname($::mariadb::params::pidfile)
 
     file { $piddir:
       ensure    => directory,

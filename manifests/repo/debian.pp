@@ -9,6 +9,12 @@ define mariadb::repo::debian (
   $ensure  = 'present',
 ) {
 
+  # Resource defaults
+  Exec {
+    path      => ['/bin', '/sbin', '/usr/bin', '/usr/sbin', '/usr/local/bin'],
+    logoutput => 'on_failure',
+  }
+
   $mirror         = $mariadb::mirror
   $escaped_branch = regsubst("${branch}", '\.', '_', 'G')
 
@@ -34,7 +40,7 @@ define mariadb::repo::debian (
 
   # Pin version when requested or repo branch instead
   # More info: http://manpages.ubuntu.com/manpages/precise/es/man5/apt_preferences.5.html
-  apt::pin { "pin_mariadb_${escaped_branch}":
+  $pin_defs = {
     packages    => $mariadb::repo::pin_pkg ? {
       undef     => "mariadb-client-#{branch}",
       default   => $pin_packages,
@@ -51,34 +57,48 @@ define mariadb::repo::debian (
     before      => Class['mariadb::package'],
     order       => 50,
   }
+  $rm_pin = !$hold and $ensure == 'present' and ($version or $branch)
+  $pin_extra = $rm_pin ? {
+    true    => { notify => Exec["pin_mariadb_${escaped_branch}_postremoval"] },
+    default => {},
+  }
+  create_resources(apt::pin, { "pin_mariadb_${escaped_branch}" => $pin_extra }, $pin_defs)
 
-  if !$hold and $ensure == 'present' and ($version or $branch) {
+  if $rm_pin {
     $_setting_type = 'pref'
     $_path         = $::apt::params::config_files[$_setting_type]['path']
     $_ext          = $::apt::params::config_files[$_setting_type]['ext']
     $_base_name    = regsubst("pin_mariadb_${escaped_branch}", '[^0-9a-z\-_\.]', '_', 'IG')
     $_priority     = 50
+    $_pinfile_pri  = "${_path}/${_priority}${_base_name}${_ext}"
+    $_pinfile      = "${_path}/${_base_name}${_ext}"
 
     if defined(Class['mariadb::cluster']) {
       $require = [
         Package[$mariadb::cluster::galera_name],
         Service['mariadb'],
         Class['mariadb::package'],
+        Apt::Pin["pin_mariadb_${escaped_branch}"],
       ]
     } elsif defined(Class['mariadb::server']) {
       $require = [
         Service['mariadb'],
         Class['mariadb::package'],
+        Apt::Pin["pin_mariadb_${escaped_branch}"],
       ]
     } else {
-      $require = Class['mariadb::package']
+      $require = [
+        Class['mariadb::package'],
+        Apt::Pin["pin_mariadb_${escaped_branch}"],
+      ]
     }
 
     exec { "pin_mariadb_${escaped_branch}_postremoval":
-      command => "/bin/rm -f ${_path}/${_priority}${_base_name}${_ext} ${_path}/${_base_name}${_ext}",
-      user    => 'root',
-      group   => 'root',
-      require => $require,
+      command     => "rm -f ${_pinfile_pri} ${_pinfile}",
+      user        => 'root',
+      group       => 'root',
+      require     => $require,
+      refreshonly => true,
     }
   }
 
